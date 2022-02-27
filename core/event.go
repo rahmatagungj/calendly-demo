@@ -2,6 +2,7 @@ package core
 
 import (
     "time"
+
     "github.com/google/uuid"
 )
 
@@ -10,31 +11,43 @@ type Event struct {
     Name string
     // Schedules stores the information about availability for
     // each day
-    Schedules map[time.Weekday][]Range
+    Schedules Schedule
+}
+
+type Schedule struct {
+    Location *time.Location
+    Ranges   map[time.Weekday][]Range
 }
 
 type SlotParameters struct {
-    month time.Month
-    year  int
+    Start, End time.Time
 }
 
-type AvailableDay struct {
-    Date  time.Time
-    Slots []Range
-}
+func (e Event) GetAvailableSlots(params SlotParameters) ([]time.Time, error) {
 
-func (e Event) GetAvailableSlots(params SlotParameters) ([]AvailableDay, error) {
-    startDayOfTheMonth := time.Date(params.year, params.month, 1, 0, 0, 0, 0, time.UTC).Day()
-    endDayOfTheMonth := time.Date(params.year, params.month+1, 0, 0, 0, 0, 0, time.UTC).Day()
-    var availableDays []AvailableDay
-    for i := startDayOfTheMonth; i <= endDayOfTheMonth; i++ {
-        now := time.Date(params.year, params.month, i, 0, 0, 0, 0, time.UTC)
-        if rs, ok := e.Schedules[now.Weekday()]; ok {
-            availableDays = append(availableDays, AvailableDay{
-                Date:  now,
-                Slots: rs,
-            })
+    start := params.Start.In(e.Schedules.Location)
+    end := params.End.In(e.Schedules.Location)
+
+    startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+    endDay := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location())
+
+    var times []time.Time
+
+    curr := startDay
+    for {
+        if rs, ok := e.Schedules.Ranges[curr.Weekday()]; ok {
+            for _, r := range rs {
+                availability := curr.Add(time.Duration(r.StartSec) * time.Second)
+                if availability == start || availability.After(start) && availability.Before(end) {
+                    times = append(times, availability)
+                }
+            }
+        }
+        curr = curr.Add(24 * time.Hour)
+        if curr.After(endDay) {
+            break
         }
     }
-    return availableDays, nil
+
+    return times, nil
 }
