@@ -12,6 +12,9 @@ type Event struct {
     // Schedules stores the information about availability for
     // each day
     Schedules Schedule
+
+    // Duration defines how long an event should take
+    Duration time.Duration
 }
 
 type Schedule struct {
@@ -37,9 +40,18 @@ func (e Event) GetAvailableSlots(params SlotParameters) ([]time.Time, error) {
     for {
         if rs, ok := e.Schedules.Ranges[curr.Weekday()]; ok {
             for _, r := range rs {
-                availability := curr.Add(time.Duration(r.StartSec) * time.Second)
-                if availability == start || availability.After(start) && availability.Before(end) {
-                    times = append(times, availability)
+                startAvailable := curr.Add(time.Duration(r.StartSec) * time.Second)
+                endAvailable := curr.Add(time.Duration(r.EndSec) * time.Second)
+
+                slots, err := e.slotsInRange(startAvailable, endAvailable)
+                if err != nil {
+                    return nil, err
+                }
+
+                for _, slot := range slots {
+                    if slot == start || slot.After(start) && slot.Before(end) {
+                        times = append(times, slot)
+                    }
                 }
             }
         }
@@ -48,6 +60,22 @@ func (e Event) GetAvailableSlots(params SlotParameters) ([]time.Time, error) {
             break
         }
     }
-
     return times, nil
+}
+
+// slotsInRange return all start time that is available for the range [startTime, endTime)
+func (e Event) slotsInRange(startTime, endTime time.Time) ([]time.Time, error) {
+    var availabilities []time.Time
+    curr := startTime
+    for {
+        if curr == endTime || curr.After(endTime) {
+            break
+        }
+        end := curr.Add(e.Duration)
+        if end == endTime || end.Before(endTime) {
+            availabilities = append(availabilities, curr)
+        }
+        curr = curr.Add(e.Duration)
+    }
+    return availabilities, nil
 }

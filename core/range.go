@@ -20,3 +20,4 @@ func (r Range) intToString(s int) string {
     t := time.Unix(int64(s), 0).In(time.UTC)
     return t.Format("15:04")
 }
+

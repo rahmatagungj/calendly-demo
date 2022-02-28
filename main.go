@@ -14,13 +14,14 @@ func main() {
             Ranges: map[time.Weekday][]core.Range{
                 time.Sunday: []core.Range{{StartSec: 3600, EndSec: 7200}, {StartSec: 7200, EndSec: 10800}},
                 time.Monday: []core.Range{{StartSec: 3600, EndSec: 7200}},
-                time.Tuesday: []core.Range{{StartSec: 3600, EndSec: 7200}},
-                time.Wednesday: []core.Range{{StartSec: 3600, EndSec: 7200}},
-                time.Thursday: []core.Range{{StartSec: 3600, EndSec: 7200}},
-                time.Friday: []core.Range{{StartSec: 3600, EndSec: 7200}},
-                time.Saturday: []core.Range{{StartSec: 3600, EndSec: 7200}},
+                // time.Tuesday: []core.Range{{StartSec: 3600, EndSec: 7200}},
+                // time.Wednesday: []core.Range{{StartSec: 3600, EndSec: 7200}},
+                // time.Thursday: []core.Range{{StartSec: 3600, EndSec: 7200}},
+                // time.Friday: []core.Range{{StartSec: 3600, EndSec: 7200}},
+                // time.Saturday: []core.Range{{StartSec: 3600, EndSec: 7200}},
             },
         },
+        Duration: 30 * time.Minute,
     }
 
     loc, _ := time.LoadLocation("Asia/Jakarta")
