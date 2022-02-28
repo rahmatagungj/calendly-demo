@@ -15,6 +15,8 @@ type Event struct {
 
     // Duration defines how long an event should take
     Duration time.Duration
+
+    DateOverrides map[int64][]Range
 }
 
 type Schedule struct {
@@ -38,8 +40,10 @@ func (e Event) GetAvailableSlots(params SlotParameters) ([]time.Time, error) {
 
     curr := startDay
     for {
-        if rs, ok := e.Schedules.Ranges[curr.Weekday()]; ok {
-            for _, r := range rs {
+
+        if dateOverrides, ok := e.DateOverrides[curr.Unix()]; ok {
+            for _, r := range dateOverrides {
+                // TODO DRY this
                 startAvailable := curr.Add(time.Duration(r.StartSec) * time.Second)
                 endAvailable := curr.Add(time.Duration(r.EndSec) * time.Second)
 
@@ -54,7 +58,26 @@ func (e Event) GetAvailableSlots(params SlotParameters) ([]time.Time, error) {
                     }
                 }
             }
+        } else {
+            if rs, ok := e.Schedules.Ranges[curr.Weekday()]; ok {
+                for _, r := range rs {
+                    startAvailable := curr.Add(time.Duration(r.StartSec) * time.Second)
+                    endAvailable := curr.Add(time.Duration(r.EndSec) * time.Second)
+
+                    slots, err := e.slotsInRange(startAvailable, endAvailable)
+                    if err != nil {
+                        return nil, err
+                    }
+
+                    for _, slot := range slots {
+                        if slot == start || slot.After(start) && slot.Before(end) {
+                            times = append(times, slot)
+                        }
+                    }
+                }
+            }
         }
+
         curr = curr.Add(24 * time.Hour)
         if curr.After(endDay) {
             break

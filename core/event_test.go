@@ -17,6 +17,7 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         Name      string
         Schedules Schedule
         Duration  time.Duration
+        DateOverrides map[int64][]Range
     }
     type args struct {
         params *SlotParameters
@@ -194,6 +195,125 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
             },
             wantErr: false,
         },
+        {
+            name: "has 1 overrides for a date. override add some new ranges.",
+            fields: fields{
+                Schedules: Schedule{
+                    Ranges: map[time.Weekday][]Range{
+                        time.Monday: []Range{
+                            {
+                                StartSec: 0,
+                                EndSec:   3600,
+                            },
+                        },
+                    },
+                    Location: time.UTC,
+                },
+                DateOverrides: map[int64][]Range{
+                    time.Date(2022, time.February, 8, 0, 0, 0, 0, time.UTC).Unix(): []Range{
+                        {
+                            StartSec: 3600,
+                            EndSec:   7200,
+                        },
+                        {
+                            StartSec: 14400,
+                            EndSec:   18000,
+                        },
+                    },
+                },
+                Duration: 60 * time.Minute,
+            },
+            args: &args{
+                params: &SlotParameters{
+                    Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+                    End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+                },
+            },
+            want: []time.Time{
+                time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 8, 1, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 8, 4, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+            },
+            wantErr: false,
+        },
+        {
+            name: "has 1 overrides for a date. override change existing schedule",
+            fields: fields{
+                Schedules: Schedule{
+                    Ranges: map[time.Weekday][]Range{
+                        time.Monday: []Range{
+                            {
+                                StartSec: 0,
+                                EndSec:   3600,
+                            },
+                        },
+                    },
+                    Location: time.UTC,
+                },
+                DateOverrides: map[int64][]Range{
+                    time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC).Unix(): []Range{
+                        {
+                            StartSec: 3600,
+                            EndSec:   7200,
+                        },
+                        {
+                            StartSec: 14400,
+                            EndSec:   18000,
+                        },
+                    },
+                },
+                Duration: 60 * time.Minute,
+            },
+            args: &args{
+                params: &SlotParameters{
+                    Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+                    End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+                },
+            },
+            want: []time.Time{
+                time.Date(2022, time.February, 7, 1, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 7, 4, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+            },
+            wantErr: false,
+        },
+        {
+            name: "has 1 overrides for a date. override clear an existing schedule",
+            fields: fields{
+                Schedules: Schedule{
+                    Ranges: map[time.Weekday][]Range{
+                        time.Monday: []Range{
+                            {
+                                StartSec: 0,
+                                EndSec:   3600,
+                            },
+                        },
+                    },
+                    Location: time.UTC,
+                },
+                DateOverrides: map[int64][]Range{
+                    time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC).Unix(): nil,
+                    time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC).Unix(): []Range{},
+                },
+                Duration: 60 * time.Minute,
+            },
+            args: &args{
+                params: &SlotParameters{
+                    Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+                    End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+                },
+            },
+            want: []time.Time{
+                time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+            },
+            wantErr: false,
+        },
     }
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
@@ -203,6 +323,7 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                 Name:      tt.fields.Name,
                 Schedules: tt.fields.Schedules,
                 Duration: tt.fields.Duration,
+                DateOverrides: tt.fields.DateOverrides,
             }
             got, err := e.GetAvailableSlots(*tt.args.params)
             if (err != nil) != tt.wantErr {
