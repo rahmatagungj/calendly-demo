@@ -1,104 +1,76 @@
 package core
 
 import (
+    "fmt"
     "time"
 
     "github.com/google/uuid"
 )
 
 type Event struct {
-    ID   uuid.UUID
-    Name string
-    // Schedules stores the information about availability for
-    // each day
-    Schedules Schedule
+	ID   uuid.UUID
+	Name string
 
-    // Duration defines how long an event should take
-    Duration time.Duration
-
-    DateOverrides map[int64][]Range
-}
-
-type Schedule struct {
+	// Location defines the timezone used by calendar creator
     Location *time.Location
-    Ranges   map[time.Weekday][]Range
+
+	// Duration defines how long an event should take
+	Duration time.Duration
+
+    // Availability stores the information about availability for
+    // each day
+    Availability map[time.Weekday][]Range
+
+	// DateOverrides specify the overriding range for a specific day
+	// key is timestamp milis of the 00:00:00 for the given day
+	DateOverrides map[int64][]Range
 }
 
-type SlotParameters struct {
-    Start, End time.Time
+type GetSlotParameters struct {
+	Start, End time.Time
 }
 
-func (e Event) GetAvailableSlots(params SlotParameters) ([]time.Time, error) {
+func (p GetSlotParameters) IsValid() error {
+    if ok := p.Start.Before(p.End); !ok {
+        return fmt.Errorf("invalid date. start time must be before end")
+    }
+    return nil
+}
 
-    start := params.Start.In(e.Schedules.Location)
-    end := params.End.In(e.Schedules.Location)
+func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) {
 
-    startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
-    endDay := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location())
+    if err := params.IsValid(); err != nil {
+        return nil, err
+    }
 
-    var times []time.Time
+	start := params.Start.In(e.Location)
+	end := params.End.In(e.Location)
 
-    curr := startDay
-    for {
+	startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+	endDay := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location())
 
-        if dateOverrides, ok := e.DateOverrides[curr.Unix()]; ok {
-            for _, r := range dateOverrides {
-                // TODO DRY this
-                startAvailable := curr.Add(time.Duration(r.StartSec) * time.Second)
-                endAvailable := curr.Add(time.Duration(r.EndSec) * time.Second)
+	var times []time.Time
 
-                slots, err := e.slotsInRange(startAvailable, endAvailable)
-                if err != nil {
-                    return nil, err
-                }
+	curr := startDay
+	for {
+		var ranges []Range
+		if dateOverrides, ok := e.DateOverrides[curr.Unix()]; ok {
+			ranges = dateOverrides
+		} else if scheduleRanges, ok := e.Availability[curr.Weekday()]; ok {
+			ranges = scheduleRanges
+		}
 
-                for _, slot := range slots {
-                    if slot == start || slot.After(start) && slot.Before(end) {
-                        times = append(times, slot)
-                    }
+		for _, r := range ranges {
+            for _, slot := range r.Slots(curr, e.Duration) {
+                if slot == start || slot.After(start) && slot.Before(end) {
+                    times = append(times, slot)
                 }
             }
-        } else {
-            if rs, ok := e.Schedules.Ranges[curr.Weekday()]; ok {
-                for _, r := range rs {
-                    startAvailable := curr.Add(time.Duration(r.StartSec) * time.Second)
-                    endAvailable := curr.Add(time.Duration(r.EndSec) * time.Second)
-
-                    slots, err := e.slotsInRange(startAvailable, endAvailable)
-                    if err != nil {
-                        return nil, err
-                    }
-
-                    for _, slot := range slots {
-                        if slot == start || slot.After(start) && slot.Before(end) {
-                            times = append(times, slot)
-                        }
-                    }
-                }
-            }
-        }
-
-        curr = curr.Add(24 * time.Hour)
-        if curr.After(endDay) {
-            break
-        }
-    }
-    return times, nil
-}
-
-// slotsInRange return all start time that is available for the range [startTime, endTime)
-func (e Event) slotsInRange(startTime, endTime time.Time) ([]time.Time, error) {
-    var availabilities []time.Time
-    curr := startTime
-    for {
-        if curr == endTime || curr.After(endTime) {
-            break
-        }
-        end := curr.Add(e.Duration)
-        if end == endTime || end.Before(endTime) {
-            availabilities = append(availabilities, curr)
-        }
-        curr = curr.Add(e.Duration)
-    }
-    return availabilities, nil
+		}
+		curr = curr.Add(24 * time.Hour)
+		if curr.After(endDay) {
+			break
+		}
+	}
+	return times, nil
 }

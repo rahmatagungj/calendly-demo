@@ -4,8 +4,6 @@ import (
     "reflect"
     "testing"
     "time"
-
-    "github.com/google/uuid"
 )
 
 func TestEvent_GetAvailableSlots(t *testing.T) {
@@ -13,14 +11,10 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
     jktTime, _ := time.LoadLocation("Asia/Jakarta")
 
     type fields struct {
-        ID        uuid.UUID
-        Name      string
-        Schedules Schedule
-        Duration  time.Duration
-        DateOverrides map[int64][]Range
+        Event *Event
     }
     type args struct {
-        params *SlotParameters
+        params *GetSlotParameters
     }
     tests := []struct {
         name    string
@@ -32,9 +26,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "should get multiple available time within user time range parameter",
             fields: fields{
-                Schedules:
-                Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 25200,
@@ -44,10 +38,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                     },
                     Location: time.UTC,
                 },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -63,9 +56,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "should get multiple available time within user time range parameter",
             fields: fields{
-                Schedules:
-                Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 25200,
@@ -79,10 +72,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                     },
                     Location: time.UTC,
                 },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -102,9 +94,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "include first available date if it is exactly the same as the user start range",
             fields: fields{
-                Schedules:
-                Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 25200,
@@ -114,10 +106,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                     },
                     Location: time.UTC,
                 },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 7, 14, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -133,9 +124,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "should exclude last available if schedule",
             fields: fields{
-                Schedules:
-                Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 25200,
@@ -145,10 +136,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                     },
                     Location: time.UTC,
                 },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.February, 28, 14, 0, 0, 0, jktTime),
                 },
@@ -163,9 +153,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "should get 2 available time within user time range parameter",
             fields: fields{
-                Schedules:
-                Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 30 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 0,
@@ -175,10 +165,10 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                     },
                     Location: time.UTC,
                 },
-                Duration: 30 * time.Minute,
             },
+
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -198,8 +188,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "has 1 overrides for a date. override add some new ranges.",
             fields: fields{
-                Schedules: Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 0,
@@ -208,23 +199,22 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                         },
                     },
                     Location: time.UTC,
-                },
-                DateOverrides: map[int64][]Range{
-                    time.Date(2022, time.February, 8, 0, 0, 0, 0, time.UTC).Unix(): []Range{
-                        {
-                            StartSec: 3600,
-                            EndSec:   7200,
-                        },
-                        {
-                            StartSec: 14400,
-                            EndSec:   18000,
+                    DateOverrides: map[int64][]Range{
+                        time.Date(2022, time.February, 8, 0, 0, 0, 0, time.UTC).Unix(): []Range{
+                            {
+                                StartSec: 3600,
+                                EndSec:   7200,
+                            },
+                            {
+                                StartSec: 14400,
+                                EndSec:   18000,
+                            },
                         },
                     },
                 },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -242,8 +232,9 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "has 1 overrides for a date. override change existing schedule",
             fields: fields{
-                Schedules: Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 0,
@@ -252,23 +243,22 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                         },
                     },
                     Location: time.UTC,
-                },
-                DateOverrides: map[int64][]Range{
-                    time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC).Unix(): []Range{
-                        {
-                            StartSec: 3600,
-                            EndSec:   7200,
-                        },
-                        {
-                            StartSec: 14400,
-                            EndSec:   18000,
+                    DateOverrides: map[int64][]Range{
+                        time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC).Unix(): []Range{
+                            {
+                                StartSec: 3600,
+                                EndSec:   7200,
+                            },
+                            {
+                                StartSec: 14400,
+                                EndSec:   18000,
+                            },
                         },
                     },
                 },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -285,8 +275,8 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
         {
             name: "has 1 overrides for a date. override clear an existing schedule",
             fields: fields{
-                Schedules: Schedule{
-                    Ranges: map[time.Weekday][]Range{
+                Event: &Event{
+                    Availability: map[time.Weekday][]Range{
                         time.Monday: []Range{
                             {
                                 StartSec: 0,
@@ -295,15 +285,15 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
                         },
                     },
                     Location: time.UTC,
+                    DateOverrides: map[int64][]Range{
+                        time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC).Unix(): nil,
+                        time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC).Unix(): []Range{},
+                    },
+                    Duration: 60 * time.Minute,
                 },
-                DateOverrides: map[int64][]Range{
-                    time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC).Unix(): nil,
-                    time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC).Unix(): []Range{},
-                },
-                Duration: 60 * time.Minute,
             },
             args: &args{
-                params: &SlotParameters{
+                params: &GetSlotParameters{
                     Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
                     End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
                 },
@@ -314,24 +304,72 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
             },
             wantErr: false,
         },
+        {
+            name: "return error if parameter is invalid",
+            fields: fields{
+                Event: &Event{
+                },
+            },
+            args: &args{
+                params: &GetSlotParameters{
+                    Start: time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+                    End:   time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+                },
+            },
+            want: nil,
+            wantErr: true,
+        },
     }
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
 
-            e := Event{
-                ID:        tt.fields.ID,
-                Name:      tt.fields.Name,
-                Schedules: tt.fields.Schedules,
-                Duration: tt.fields.Duration,
-                DateOverrides: tt.fields.DateOverrides,
-            }
-            got, err := e.GetAvailableSlots(*tt.args.params)
+            got, err := tt.fields.Event.GetAvailableSlots(*tt.args.params)
             if (err != nil) != tt.wantErr {
                 t.Errorf("GetAvailableSlots() error = %v, wantErr %v", err, tt.wantErr)
                 return
             }
             if !reflect.DeepEqual(got, tt.want) {
                 t.Errorf("GetAvailableSlots() got = %v, want %v", got, tt.want)
+            }
+        })
+    }
+}
+
+func TestGetSlotParameters_IsValid(t *testing.T) {
+    type fields struct {
+        Start time.Time
+        End   time.Time
+    }
+    tests := []struct {
+        name    string
+        fields  fields
+        wantErr bool
+    }{
+        {
+            name:    "valid parameter",
+            fields:  fields{
+                Start: time.Now(),
+                End:   time.Now().Add(5 * time.Minute),
+            },
+            wantErr: false,
+        },
+        {
+            name:    "invalid parameter",
+            fields:  fields{
+                Start: time.Now().Add(5 * time.Minute),
+                End:   time.Now(),
+            },
+            wantErr: true,
+        },
+    }
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            p := GetSlotParameters{
+                Start: tt.fields.Start,
+                End:   tt.fields.End,
+            }
+            if err := p.IsValid(); (err != nil) != tt.wantErr {
+                t.Errorf("IsValid() error = %v, wantErr %v", err, tt.wantErr)
             }
         })
     }
