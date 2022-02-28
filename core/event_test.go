@@ -1,9 +1,11 @@
-package core
+package core_test
 
 import (
     "reflect"
     "testing"
     "time"
+
+    . "github.com/imrenagi/calendly-demo/core"
 )
 
 func TestEvent_GetAvailableSlots(t *testing.T) {

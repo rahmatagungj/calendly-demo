@@ -1,10 +1,10 @@
 package core
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 
-    "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -12,14 +12,14 @@ type Event struct {
 	Name string
 
 	// Location defines the timezone used by calendar creator
-    Location *time.Location
+	Location *time.Location
 
 	// Duration defines how long an event should take
 	Duration time.Duration
 
-    // Availability stores the information about availability for
-    // each day
-    Availability map[time.Weekday][]Range
+	// Availability stores the information about availability for
+	// each day
+	Availability map[time.Weekday][]Range
 
 	// DateOverrides specify the overriding range for a specific day
 	// key is timestamp milis of the 00:00:00 for the given day
@@ -31,17 +31,17 @@ type GetSlotParameters struct {
 }
 
 func (p GetSlotParameters) IsValid() error {
-    if ok := p.Start.Before(p.End); !ok {
-        return fmt.Errorf("invalid date. start time must be before end")
-    }
-    return nil
+	if ok := p.Start.Before(p.End); !ok {
+		return fmt.Errorf("invalid date. start time must be before end")
+	}
+	return nil
 }
 
 func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) {
 
-    if err := params.IsValid(); err != nil {
-        return nil, err
-    }
+	if err := params.IsValid(); err != nil {
+		return nil, err
+	}
 
 	start := params.Start.In(e.Location)
 	end := params.End.In(e.Location)
@@ -61,11 +61,11 @@ func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) 
 		}
 
 		for _, r := range ranges {
-            for _, slot := range r.Slots(curr, e.Duration) {
-                if slot == start || slot.After(start) && slot.Before(end) {
-                    times = append(times, slot)
-                }
-            }
+			for _, slot := range r.Slots(curr, e.Duration) {
+				if slot == start || slot.After(start) && slot.Before(end) {
+					times = append(times, slot)
+				}
+			}
 		}
 		curr = curr.Add(24 * time.Hour)
 		if curr.After(endDay) {
