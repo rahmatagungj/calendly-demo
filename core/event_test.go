@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+    "github.com/google/uuid"
+    "github.com/stretchr/testify/assert"
 
 	. "github.com/imrenagi/calendly-demo/core"
 )
@@ -438,6 +439,38 @@ func TestEvent_CreateBooking(t *testing.T) {
 			wantErr: nil,
             wantBookingLength: 1,
 		},
+        {
+            name: "should not be able to create booking if time is not available",
+            fields: fields{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
+                        time.Monday: []Range{
+                            {
+                                StartSec: 0,
+                                EndSec:   3600,
+                            },
+                        },
+                    },
+                    Location: time.UTC,
+                },
+            },
+            args: args{
+                params: CreateBookingParameters{
+                    Invitee: Invitee{
+                        Email:    "foo@bar.com",
+                        Name:     "Foo Bar",
+                        Timezone: jktTime,
+                    },
+                    StartTime: time.Date(2022, 2, 7, 8, 0, 0, 0, jktTime),
+                },
+            },
+            wantFn: func(got *Booking) {
+                assert.Nil(t, got)
+            },
+            wantErr: ErrTimeNotAvailable,
+            wantBookingLength: 0,
+        },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
