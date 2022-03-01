@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+
 type Event struct {
 	ID   uuid.UUID
 	Name string
@@ -26,7 +27,7 @@ type Event struct {
 	DateOverrides map[int64][]Range
 
 	// Bookings stores all booking created for this event
-	Bookings []Booking
+	Bookings Bookings
 }
 
 type GetSlotParameters struct {
@@ -65,7 +66,8 @@ func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) 
 
 		for _, r := range ranges {
 			for _, slot := range r.Slots(curr, e.Duration) {
-				if slot == start || slot.After(start) && slot.Before(end) {
+				if e.Bookings.IsAvailable(slot) &&
+					(slot.Equal(start) || slot.After(start) && slot.Before(end)) {
 					times = append(times, slot)
 				}
 			}
@@ -83,6 +85,8 @@ type CreateBookingParameters struct {
 	StartTime time.Time
 }
 
+var ErrTimeNotAvailable = fmt.Errorf("no time available")
+
 // CreateBooking create new booking for given schedule if it is available
 func (e *Event) CreateBooking(params CreateBookingParameters) (*Booking, error) {
 	availableTimes, err := e.GetAvailableSlots(GetSlotParameters{
@@ -94,11 +98,11 @@ func (e *Event) CreateBooking(params CreateBookingParameters) (*Booking, error) 
 	}
 
 	for _, t := range availableTimes {
-		if t == params.StartTime.In(t.Location()) {
+		if t.Equal(params.StartTime) {
 			b := NewBooking(params)
 			e.Bookings = append(e.Bookings, *b)
 			return b, nil
 		}
 	}
-	return nil, fmt.Errorf("no time available")
+	return nil, ErrTimeNotAvailable
 }

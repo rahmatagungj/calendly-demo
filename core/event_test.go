@@ -325,6 +325,46 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+        {
+            name: "should remove booked time from available slots",
+            fields: fields{
+                Event: &Event{
+                    Duration: 60 * time.Minute,
+                    Availability: map[time.Weekday][]Range{
+                        time.Monday: []Range{
+                            {
+                                StartSec: 0,
+                                EndSec:   3600,
+                            },
+                        },
+                    },
+                    Location: time.UTC,
+                    Bookings: []Booking{
+                        {
+                            ID:        uuid.New(),
+                            Invitee:   Invitee{
+                                Email:    "foo@bar.com",
+                                Name:     "Foo Bar",
+                                Timezone: jktTime,
+                            },
+                            StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, jktTime),
+                        },
+                    },
+                },
+            },
+            args: &args{
+                params: &GetSlotParameters{
+                    Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+                    End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+                },
+            },
+            want: []time.Time{
+                time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
+                time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+            },
+            wantErr: false,
+        },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

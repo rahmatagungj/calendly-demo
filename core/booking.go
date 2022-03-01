@@ -15,6 +15,17 @@ func NewBooking(p CreateBookingParameters) *Booking {
 	}
 }
 
+type Bookings []Booking
+
+func (b Bookings) IsAvailable(t time.Time) bool {
+	for _, booking := range b {
+		if booking.StartTime.Equal(t) {
+			return false
+		}
+	}
+	return true
+}
+
 type Booking struct {
 	ID        uuid.UUID
 	Invitee   Invitee
