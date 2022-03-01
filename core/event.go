@@ -24,6 +24,9 @@ type Event struct {
 	// DateOverrides specify the overriding range for a specific day
 	// key is timestamp milis of the 00:00:00 for the given day
 	DateOverrides map[int64][]Range
+
+	// Bookings stores all booking created for this event
+	Bookings []Booking
 }
 
 type GetSlotParameters struct {
@@ -73,4 +76,29 @@ func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) 
 		}
 	}
 	return times, nil
+}
+
+type CreateBookingParameters struct {
+	Invitee   Invitee
+	StartTime time.Time
+}
+
+// CreateBooking create new booking for given schedule if it is available
+func (e *Event) CreateBooking(params CreateBookingParameters) (*Booking, error) {
+	availableTimes, err := e.GetAvailableSlots(GetSlotParameters{
+		Start: params.StartTime,
+		End:   params.StartTime.Add(e.Duration),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, t := range availableTimes {
+		if t == params.StartTime.In(t.Location()) {
+			b := NewBooking(params)
+			e.Bookings = append(e.Bookings, *b)
+			return b, nil
+		}
+	}
+	return nil, fmt.Errorf("no time available")
 }
