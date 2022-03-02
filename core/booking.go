@@ -26,6 +26,17 @@ func (b Bookings) IsAvailable(t time.Time) bool {
 	return true
 }
 
+// GetBookedCount returned the total spot has been booked for a given time
+func (b Bookings) GetBookedCount(t time.Time) int {
+	var count int
+	for _, booking := range b {
+		if booking.StartTime.Equal(t) {
+			count++
+		}
+	}
+	return count
+}
+
 type Booking struct {
 	ID        uuid.UUID
 	Invitee   Invitee

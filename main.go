@@ -23,7 +23,7 @@ func main() {
     }
 
     loc, _ := time.LoadLocation("Asia/Jakarta")
-    ts, _ := e.GetAvailableSlots(core.GetSlotParameters{
+    ts, _ := e.GetAvailableSpots(core.GetSpotParameters{
         Start: time.Date(2022, 2, 1, 8, 0, 0, 0, loc),
         End: time.Date(2022, 2, 28, 8, 0, 0, 0, loc),
     })

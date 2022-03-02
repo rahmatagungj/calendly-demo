@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-
 type Event struct {
 	ID   uuid.UUID
 	Name string
@@ -23,25 +22,33 @@ type Event struct {
 	Availability map[time.Weekday][]Range
 
 	// DateOverrides specify the overriding range for a specific day
-	// key is timestamp milis of the 00:00:00 for the given day
+	// key is timestamp millis of the 00:00:00 for the given day
 	DateOverrides map[int64][]Range
 
 	// Bookings stores all booking created for this event
 	Bookings Bookings
+
+	// MaxInvitees shows maximum number of booking can be created
+	MaxInvitees int
 }
 
-type GetSlotParameters struct {
+type GetSpotParameters struct {
 	Start, End time.Time
 }
 
-func (p GetSlotParameters) IsValid() error {
+func (p GetSpotParameters) IsValid() error {
 	if ok := p.Start.Before(p.End); !ok {
 		return fmt.Errorf("invalid date. start time must be before end")
 	}
 	return nil
 }
 
-func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) {
+type Spot struct {
+	InviteeRemaining int
+	StartTime        time.Time
+}
+
+func (e Event) GetAvailableSpots(params GetSpotParameters) ([]Spot, error) {
 
 	if err := params.IsValid(); err != nil {
 		return nil, err
@@ -53,7 +60,7 @@ func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) 
 	startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
 	endDay := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, end.Location())
 
-	var times []time.Time
+	var spots []Spot
 
 	curr := startDay
 	for {
@@ -66,9 +73,13 @@ func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) 
 
 		for _, r := range ranges {
 			for _, slot := range r.Slots(curr, e.Duration) {
-				if e.Bookings.IsAvailable(slot) &&
+				remainingSpot := e.MaxInvitees - e.Bookings.GetBookedCount(slot)
+				if remainingSpot > 0 &&
 					(slot.Equal(start) || slot.After(start) && slot.Before(end)) {
-					times = append(times, slot)
+					spots = append(spots, Spot{
+						InviteeRemaining: remainingSpot,
+						StartTime:        slot,
+					})
 				}
 			}
 		}
@@ -77,7 +88,7 @@ func (e Event) GetAvailableSlots(params GetSlotParameters) ([]time.Time, error) 
 			break
 		}
 	}
-	return times, nil
+	return spots, nil
 }
 
 type CreateBookingParameters struct {
@@ -89,7 +100,7 @@ var ErrTimeNotAvailable = fmt.Errorf("no time available")
 
 // CreateBooking create new booking for given schedule if it is available
 func (e *Event) CreateBooking(params CreateBookingParameters) (*Booking, error) {
-	availableTimes, err := e.GetAvailableSlots(GetSlotParameters{
+	availableSpots, err := e.GetAvailableSpots(GetSpotParameters{
 		Start: params.StartTime,
 		End:   params.StartTime.Add(e.Duration),
 	})
@@ -97,8 +108,8 @@ func (e *Event) CreateBooking(params CreateBookingParameters) (*Booking, error) 
 		return nil, err
 	}
 
-	for _, t := range availableTimes {
-		if t.Equal(params.StartTime) {
+	for _, spot := range availableSpots {
+		if spot.StartTime.Equal(params.StartTime) {
 			b := NewBooking(params)
 			e.Bookings = append(e.Bookings, *b)
 			return b, nil

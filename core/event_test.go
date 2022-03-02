@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-    "github.com/google/uuid"
-    "github.com/stretchr/testify/assert"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/imrenagi/calendly-demo/core"
 )
@@ -20,13 +20,13 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 		Event *Event
 	}
 	type args struct {
-		params *GetSlotParameters
+		params *GetSpotParameters
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    *args
-		want    []time.Time
+		want    []Spot
 		wantErr bool
 	}{
 		{
@@ -43,19 +43,20 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 						},
 					},
 					Location: time.UTC,
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 7, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -77,23 +78,24 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 						},
 					},
 					Location: time.UTC,
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 7, 8, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 8, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 8, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 8, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 7, 8, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 8, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 8, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 8, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -111,19 +113,20 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 						},
 					},
 					Location: time.UTC,
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 7, 14, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 7, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -141,18 +144,19 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 						},
 					},
 					Location: time.UTC,
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.February, 28, 14, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 7, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -170,24 +174,25 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 						},
 					},
 					Location: time.UTC,
+					MaxInvitees: 1,
 				},
 			},
 
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 7, 0, 30, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 0, 30, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 0, 30, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 0, 30, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 7, 0, 30, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 0, 30, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 0, 30, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 0, 30, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -217,21 +222,22 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 							},
 						},
 					},
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 8, 1, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 8, 4, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 8, 1, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 8, 4, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -261,20 +267,21 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 							},
 						},
 					},
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 7, 1, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 7, 4, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 1, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 7, 4, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -296,17 +303,18 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 						time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC).Unix(): []Range{},
 					},
 					Duration: 60 * time.Minute,
+					MaxInvitees: 1,
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 				},
 			},
-			want: []time.Time{
-				time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
-				time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
 			},
 			wantErr: false,
 		},
@@ -317,7 +325,7 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 				},
 			},
 			args: &args{
-				params: &GetSlotParameters{
+				params: &GetSpotParameters{
 					Start: time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
 					End:   time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
 				},
@@ -325,57 +333,100 @@ func TestEvent_GetAvailableSlots(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-        {
-            name: "should remove booked time from available slots",
-            fields: fields{
-                Event: &Event{
-                    Duration: 60 * time.Minute,
-                    Availability: map[time.Weekday][]Range{
-                        time.Monday: []Range{
-                            {
-                                StartSec: 0,
-                                EndSec:   3600,
-                            },
-                        },
-                    },
-                    Location: time.UTC,
-                    Bookings: []Booking{
-                        {
-                            ID:        uuid.New(),
-                            Invitee:   Invitee{
-                                Email:    "foo@bar.com",
-                                Name:     "Foo Bar",
-                                Timezone: jktTime,
-                            },
-                            StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, jktTime),
-                        },
-                    },
-                },
-            },
-            args: &args{
-                params: &GetSlotParameters{
-                    Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
-                    End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
-                },
-            },
-            want: []time.Time{
-                time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC),
-                time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC),
-                time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC),
-            },
-            wantErr: false,
-        },
+		{
+			name: "should remove booked time from available slots",
+			fields: fields{
+				Event: &Event{
+					Duration: 60 * time.Minute,
+					Availability: map[time.Weekday][]Range{
+						time.Monday: []Range{
+							{
+								StartSec: 0,
+								EndSec:   3600,
+							},
+						},
+					},
+					Location: time.UTC,
+					Bookings: []Booking{
+						{
+							ID: uuid.New(),
+							Invitee: Invitee{
+								Email:    "foo@bar.com",
+								Name:     "Foo Bar",
+								Timezone: jktTime,
+							},
+							StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, jktTime),
+						},
+					},
+					MaxInvitees: 1,
+				},
+			},
+			args: &args{
+				params: &GetSpotParameters{
+					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+				},
+			},
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+			},
+			wantErr: false,
+		},
+		{
+			name: "show remaining spots if spots still available",
+			fields: fields{
+				Event: &Event{
+					Duration: 60 * time.Minute,
+					Availability: map[time.Weekday][]Range{
+						time.Monday: []Range{
+							{
+								StartSec: 0,
+								EndSec:   3600,
+							},
+						},
+					},
+					Location: time.UTC,
+					Bookings: []Booking{
+						{
+							ID: uuid.New(),
+							Invitee: Invitee{
+								Email:    "foo@bar.com",
+								Name:     "Foo Bar",
+								Timezone: jktTime,
+							},
+							StartTime: time.Date(2022, time.February, 14, 7, 0, 0, 0, jktTime),
+						},
+					},
+					MaxInvitees: 2,
+				},
+			},
+			args: &args{
+				params: &GetSpotParameters{
+					Start: time.Date(2022, time.February, 1, 0, 0, 0, 0, jktTime),
+					End:   time.Date(2022, time.March, 1, 0, 0, 0, 0, jktTime),
+				},
+			},
+			want: []Spot{
+				{StartTime: time.Date(2022, time.February, 7, 0, 0, 0, 0, time.UTC), InviteeRemaining: 2},
+				{StartTime: time.Date(2022, time.February, 14, 0, 0, 0, 0, time.UTC), InviteeRemaining: 1},
+				{StartTime: time.Date(2022, time.February, 21, 0, 0, 0, 0, time.UTC), InviteeRemaining: 2},
+				{StartTime: time.Date(2022, time.February, 28, 0, 0, 0, 0, time.UTC), InviteeRemaining: 2},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := tt.fields.Event.GetAvailableSlots(*tt.args.params)
+			got, err := tt.fields.Event.GetAvailableSpots(*tt.args.params)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAvailableSlots() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetAvailableSpots() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAvailableSlots() got = %v, want %v", got, tt.want)
+				t.Errorf("GetAvailableSpots() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -410,7 +461,7 @@ func TestGetSlotParameters_IsValid(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := GetSlotParameters{
+			p := GetSpotParameters{
 				Start: tt.fields.Start,
 				End:   tt.fields.End,
 			}
@@ -454,6 +505,7 @@ func TestEvent_CreateBooking(t *testing.T) {
 						},
 					},
 					Location: time.UTC,
+					MaxInvitees: 1,
 				},
 			},
 			args: args{
@@ -476,41 +528,41 @@ func TestEvent_CreateBooking(t *testing.T) {
 					Timezone: jktTime,
 				}, got.Invitee)
 			},
-			wantErr: nil,
-            wantBookingLength: 1,
+			wantErr:           nil,
+			wantBookingLength: 1,
 		},
-        {
-            name: "should not be able to create booking if time is not available",
-            fields: fields{
-                Event: &Event{
-                    Duration: 60 * time.Minute,
-                    Availability: map[time.Weekday][]Range{
-                        time.Monday: []Range{
-                            {
-                                StartSec: 0,
-                                EndSec:   3600,
-                            },
-                        },
-                    },
-                    Location: time.UTC,
-                },
-            },
-            args: args{
-                params: CreateBookingParameters{
-                    Invitee: Invitee{
-                        Email:    "foo@bar.com",
-                        Name:     "Foo Bar",
-                        Timezone: jktTime,
-                    },
-                    StartTime: time.Date(2022, 2, 7, 8, 0, 0, 0, jktTime),
-                },
-            },
-            wantFn: func(got *Booking) {
-                assert.Nil(t, got)
-            },
-            wantErr: ErrTimeNotAvailable,
-            wantBookingLength: 0,
-        },
+		{
+			name: "should not be able to create booking if time is not available",
+			fields: fields{
+				Event: &Event{
+					Duration: 60 * time.Minute,
+					Availability: map[time.Weekday][]Range{
+						time.Monday: []Range{
+							{
+								StartSec: 0,
+								EndSec:   3600,
+							},
+						},
+					},
+					Location: time.UTC,
+				},
+			},
+			args: args{
+				params: CreateBookingParameters{
+					Invitee: Invitee{
+						Email:    "foo@bar.com",
+						Name:     "Foo Bar",
+						Timezone: jktTime,
+					},
+					StartTime: time.Date(2022, 2, 7, 8, 0, 0, 0, jktTime),
+				},
+			},
+			wantFn: func(got *Booking) {
+				assert.Nil(t, got)
+			},
+			wantErr:           ErrTimeNotAvailable,
+			wantBookingLength: 0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
