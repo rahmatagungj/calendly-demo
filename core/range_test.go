@@ -115,3 +115,62 @@ func TestRange_Slots(t *testing.T) {
 		})
 	}
 }
+
+func TestNewRange(t *testing.T) {
+	type args struct {
+		start string
+		end   string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    Range
+		wantErr bool
+	}{
+		{
+			name: "normal case",
+			args: args{
+				start: "00:00",
+				end:   "01:00",
+			},
+			want: Range{
+				StartSec: 0,
+				EndSec:   3600,
+			},
+			wantErr: false,
+		},
+		{
+			name: "from somewhere between 0-24 to 00.00",
+			args: args{
+				start: "23:00",
+				end:   "00:00",
+			},
+			want: Range{
+				StartSec: 82800,
+				EndSec:   86400,
+			},
+			wantErr: false,
+		},
+		{
+			name: "time range should only within the same day",
+			args: args{
+				start: "23:00",
+				end:   "01:00",
+			},
+			want: Range{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewRange(tt.args.start, tt.args.end)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewRange() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewRange() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

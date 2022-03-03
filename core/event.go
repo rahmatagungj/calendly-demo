@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO handle use case 23 - 0
+
 type Event struct {
 	ID   uuid.UUID
 	Name string
